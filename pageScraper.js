@@ -1,9 +1,27 @@
 const scraperObject = {
   url: "http://books.toscrape.com",
-  async scraper(browser) {
+  async scraper(browser, category) {
     let page = await browser.newPage();
     console.log(`Navigating to this ${this.url}...`);
     await page.goto(this.url);
+    // select the category of book to be displayed
+    let selectedCategory = await page.$$eval(
+      ".side_categories > ul > li > ul > li > a",
+      (links, _category) => {
+        // search for the element that matching text
+        links = links.map((a) =>
+          a.textContent.replace(/(\r\n\t|\n|\r|\t|^\s|\s$|\B\s|\s\B)/gm, "") ===
+          _category
+            ? a
+            : null
+        );
+        let link = links.filter((tx) => tx !== null)[0];
+        return link.href;
+      },
+      category
+    );
+    // navigate to selected category
+    await page.goto(selectedCategory);
     let scrapedData = [];
     async function scrapedCurrentPage() {
       // wait for target DOM to be rendered
